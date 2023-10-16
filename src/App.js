@@ -1,25 +1,9 @@
-import logo from './logo.svg';
-import './App.css';
+import Consumer from "./components/Consumer";
+import Streamer from "./components/Streamer";
+export default function App() {
+  const searchParams = new window.URLSearchParams(window.location.search);
+  const isStreamer = searchParams.has("stream");
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+  const PeerContainer = isStreamer ? Streamer : Consumer;
+  return <PeerContainer/>
 }
-
-export default App;

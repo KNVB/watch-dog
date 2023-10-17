@@ -4,9 +4,12 @@ const io = new Server({
   cors: true,
 });
 io.on("connect", (socket) => {
-  socket.on("answer",({answer,to})=>{
-    console.log("answer event");
-    socket.to(to).emit("receiveAnswer",answer);
+  socket.on("requestStream",()=>{
+    socket.to(streamer).emit("requestStream",socket.id);
+  })
+  socket.on("sendAnswer",answer=>{
+    console.log("Answer Sent");
+    socket.to(streamer).emit("receiveAnswer",answer);
   });
   socket.on("sendICECandidateToConsumer",({iceCandidate,to})=>{
     socket.to(to).emit("addICECandidate",iceCandidate);
@@ -14,8 +17,9 @@ io.on("connect", (socket) => {
   socket.on("sendICECandidateToStreamer",iceCandidate=>{
     socket.to(streamer).emit("addICECandidate",iceCandidate);
   });
-  socket.on("offer",offer=>{
-    socket.to(streamer).emit("receiveOffer",{to:socket.id,offer:offer});
+  socket.on("sendOffer",({to,offer})=>{
+    console.log("Offer Sent");
+    socket.to(to).emit("receiveOffer",offer);
   });
   socket.on("streamerReady",()=>{
     streamer = socket.id;

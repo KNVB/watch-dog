@@ -30,15 +30,10 @@ export default function Streamer() {
             let stream = await LocalStreamManager.getMediaStream(true, true);
             const socket = io("http://localhost:5432");
             socket.emit("streamerReady");
-            socket.on("receiveOffer", async ({ offer, to }) => {
-                console.log("Received Offer");
+            socket.on("requestStream", to => {
+                console.log("receive requestStream event");
                 let peerConnection = new RTCPeerConnection(config);
-                //await peerConnection.setRemoteDescription(offer);
-              
-                peerConnection.onnegotiationneeded = async event => {
-                    console.log("Negotiation Event.");
-                   
-                }
+
                 peerConnection.ondatachannel = (event) => {
                     console.log("Data channel event");
                     initDataChannel(event.channel);
@@ -53,21 +48,28 @@ export default function Streamer() {
                     console.log("Signaling State:" + peerConnection.signalingState);
                 }
                 peerConnection.onicecandidate = event => {
-                    console.log("Candidate Event.");
+                    console.log("Candidate Event.")
                     if (event.candidate !== null) {
                         socket.emit("sendICECandidateToConsumer", { iceCandidate: event.candidate, to });
                     };
                 }
-                //await peerConnection.setLocalDescription();                
-                //socket.emit("sendAnswer", { answer: peerConnection.localDescription, to });
+                peerConnection.onnegotiationneeded = async event => {
+                    console.log("Negotiation Event.");
+                    await peerConnection.setLocalDescription();
+                    socket.emit("sendOffer", { offer: peerConnection.localDescription, to: to });
+                }
                 for (let track of stream.getTracks()) {
                     peerConnection.addTrack(track, stream);
                 }
+                socket.on("receiveAnswer", async answer => {
+                    console.log("receive answer");
+                    await peerConnection.setRemoteDescription(answer);
+                })
                 socket.on("addICECandidate", candidate => {
                     console.log("add ICE Candidate event");
                     peerConnection.addIceCandidate(candidate);
                 });
-            })
+            });
         }
         init();
     }, []);
